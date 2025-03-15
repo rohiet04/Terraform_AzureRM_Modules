@@ -1,0 +1,57 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+trigger:
+- main
+
+pool:
+  vmImage: ubuntu-latest
+
+stages:
+  - stage: Terraform_Plan
+    jobs:
+      - job: Terraform_Plan
+    
+        steps:
+          
+          - task: TerraformTaskV4@4
+            displayName: Terraform_Initialization
+            inputs:
+              provider: 'azurerm'
+              command: 'init'
+              backendServiceArm: 'DevopsTestProject-RohitGhadshi'
+              backendAzureRmResourceGroupName: 'AzDvopsPipResources'
+              backendAzureRmStorageAccountName: 'remotetfebackend'
+              backendAzureRmContainerName: 'statedata'
+              backendAzureRmKey: 'dev.terraform.tfstate'
+
+          
+          - task: TerraformTaskV4@4
+            displayName: Terraform_Plan
+            inputs:
+              provider: 'azurerm'
+              command: 'plan'
+              environmentServiceNameAzureRM: 'DevopsTestProject-RohitGhadshi'
+
+
+          - task: ArchiveFiles@2
+            displayName: Archive_Files
+            inputs:
+              rootFolderOrFile: '$(Build.BinariesDirectory)'
+              includeRootFolder: true
+              archiveType: 'zip'
+              archiveFile: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
+              replaceExistingArchive: true
+          
+          - task: PublishBuildArtifacts@1
+            displayName: PublishArtifact
+            inputs:
+              PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+              ArtifactName: 'drop'
+              publishLocation: 'Container'
+
+          
+
+         
